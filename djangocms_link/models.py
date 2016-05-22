@@ -7,7 +7,10 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from cms.models.fields import PageField
+
 from .validators import IntranetURLValidator
+from django.core.exceptions import ValidationError
 
 
 @python_2_unicode_compatible
@@ -40,14 +43,11 @@ class AbstractLink(CMSPlugin):
     # Re: max_length, see: http://stackoverflow.com/questions/417142/
     url = models.CharField(_('link'), blank=True, null=True,
                            validators=url_validators, max_length=2048)
-    page_link = models.ForeignKey(
-        Page,
-        verbose_name=_('page'),
-        blank=True,
-        null=True,
-        help_text=_('A link to a page has priority over a text link.'),
-        on_delete=models.SET_NULL
-    )
+
+    page = PageField(null=True, blank=True)
+    url = models.URLField(max_length=255, null=True, blank=True,
+                          help_text=_('If page is not set, you can enter a link here.'))
+
     anchor = models.CharField(_('anchor'), max_length=128, blank=True,
                               help_text=_('This applies only to page and text links.'
                                           ' Do <em>not</em> include a preceding "#" symbol.'))
@@ -60,6 +60,13 @@ class AbstractLink(CMSPlugin):
     target = models.CharField(_('target'), blank=True, max_length=100,
                               choices=TARGET_CHOICES)
 
+    def clean(self):
+        """
+        Require at least one link field to be set
+        """
+        if not (self.url or self.page or self.anchor or self.mailto or self.phone):
+            raise ValidationError("One of these link fields is required.")
+
     class Meta:
         abstract = True
 
@@ -71,13 +78,13 @@ class AbstractLink(CMSPlugin):
             link = 'tel:%s' % self.phone
         elif self.mailto:
             link = 'mailto:%s' % self.mailto
+        elif self.page:
+            return self.page.get_absolute_url()
         elif self.url:
-            link = self.url
-        elif self.page_link_id:
-            link = self.page_link.get_absolute_url()
+            return self.url
         else:
             link = ''
-        if (self.url or self.page_link or not link) and self.anchor:
+        if (self.url or self.page or not link) and self.anchor:
             link += '#%s' % self.anchor
         return link
 
