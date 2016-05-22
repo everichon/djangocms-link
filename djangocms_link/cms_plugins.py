@@ -33,3 +33,28 @@ class LinkPlugin(CMSPluginBase):
         return '{0}cms/img/icons/plugins/link.png'.format(settings.STATIC_URL)
 
 plugin_pool.register_plugin(LinkPlugin)
+
+
+class ButtonPlugin(CMSPluginBase):
+
+    model = Link
+    name = _('Button')
+    render_template = 'cms/plugins/button.html'
+    text_enabled = True
+    allow_children = False
+
+    def render(self, context, instance, placeholder):
+        link = instance.link()
+        context.update({
+            'name': instance.name,
+            'link': link,
+            'target': instance.target,
+            'placeholder': placeholder,
+            'object': instance
+        })
+        return context
+
+    def icon_src(self, instance):
+        return '{0}cms/img/icons/plugins/link.png'.format(settings.STATIC_URL)
+
+plugin_pool.register_plugin(ButtonPlugin)
