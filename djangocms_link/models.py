@@ -11,6 +11,7 @@ from cms.models.fields import PageField
 
 from .validators import IntranetURLValidator
 from django.core.exceptions import ValidationError
+from filer.fields.file import FilerFileField
 
 
 @python_2_unicode_compatible
@@ -41,16 +42,21 @@ class AbstractLink(CMSPlugin):
 
     name = models.CharField(_('name'), max_length=256)
     # Re: max_length, see: http://stackoverflow.com/questions/417142/
-    url = models.CharField(_('link'), blank=True, null=True,
-                           validators=url_validators, max_length=2048)
 
     page = PageField(null=True, blank=True)
+
     url = models.URLField(max_length=255, null=True, blank=True,
                           help_text=_('If page is not set, you can enter a link here.'))
 
     anchor = models.CharField(_('anchor'), max_length=128, blank=True,
                               help_text=_('This applies only to page and text links.'
                                           ' Do <em>not</em> include a preceding "#" symbol.'))
+
+    file = FilerFileField(
+        verbose_name=_('File Link'), null=True, blank=True,
+        related_name='link_file', on_delete=models.SET_NULL
+    )
+
     # Explicitly set a max_length so that we don't end up with different
     # schemata on Django 1.7 vs. 1.8.
     mailto = models.EmailField(_('email address'), max_length=254, blank=True, null=True,
@@ -64,7 +70,7 @@ class AbstractLink(CMSPlugin):
         """
         Require at least one link field to be set
         """
-        if not (self.url or self.page or self.anchor or self.mailto or self.phone):
+        if not (self.url or self.page or self.anchor or self.mailto or self.phone or self.file):
             raise ValidationError("One of these link fields is required.")
 
     class Meta:
@@ -80,6 +86,8 @@ class AbstractLink(CMSPlugin):
             link = 'mailto:%s' % self.mailto
         elif self.page:
             return self.page.get_absolute_url()
+        elif self.file:
+            return self.file.url
         elif self.url:
             return self.url
         else:
