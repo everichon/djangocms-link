@@ -58,3 +58,10 @@ class ButtonPlugin(CMSPluginBase):
         return '{0}cms/img/icons/plugins/link.png'.format(settings.STATIC_URL)
 
 plugin_pool.register_plugin(ButtonPlugin)
+
+# unregister the Bootstrap Link/Button Plugin
+try:
+    from aldryn_bootstrap3.cms_plugins import Bootstrap3ButtonCMSPlugin
+    plugin_pool.unregister_plugin(Bootstrap3ButtonCMSPlugin)
+except StandardError:
+    pass
