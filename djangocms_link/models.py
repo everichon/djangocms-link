@@ -28,7 +28,7 @@ class AbstractLink(CMSPlugin):
     )
 
     # Used by django-cms search
-    search_fields = ('name', )
+    search_fields = ('name',)
 
     url_validators = [IntranetURLValidator(intranet_host_re=getattr(
         settings, 'DJANGOCMS_LINK_INTRANET_HOSTNAME_PATTERN', None)), ]
@@ -66,6 +66,9 @@ class AbstractLink(CMSPlugin):
     target = models.CharField(_('target'), blank=True, max_length=100,
                               choices=TARGET_CHOICES)
 
+    classes = models.CharField(_('Classes'), max_length=500, blank=True,
+                               help_text=_('A list of class names separated by spaces for styling purposes'))
+
     def clean(self):
         """
         Require at least one link field to be set
@@ -98,6 +101,5 @@ class AbstractLink(CMSPlugin):
 
 
 class Link(AbstractLink):
-
     class Meta:
         abstract = False
