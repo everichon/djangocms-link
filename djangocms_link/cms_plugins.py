@@ -63,5 +63,5 @@ plugin_pool.register_plugin(ButtonPlugin)
 try:
     from aldryn_bootstrap3.cms_plugins import Bootstrap3ButtonCMSPlugin
     plugin_pool.unregister_plugin(Bootstrap3ButtonCMSPlugin)
-except StandardError:
+except Exception:
     pass
